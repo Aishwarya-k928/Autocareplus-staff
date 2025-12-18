@@ -2,110 +2,136 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AutoCare Plus | Staff Secure Terminal</title>
+    <title>AutoCare Plus | Command Staff Board</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent: #00d2ff;
-            --glass: rgba(10, 15, 28, 0.95);
+            --glass: rgba(10, 15, 28, 0.96);
             --border: rgba(255, 255, 255, 0.12);
+            --bg: #020617;
+            --error: #ff4b2b;
         }
 
+        * { box-sizing: border-box; }
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
-            background-color: #020617;
+            background-color: var(--bg);
             background-image: radial-gradient(circle at top right, #0a192f, #020617);
             font-family: 'Plus Jakarta Sans', sans-serif;
             color: white; overflow-x: hidden;
         }
 
-        /* --- LOGIN OVERLAY --- */
-        #loginOverlay {
-            position: fixed; inset: 0; z-index: 9999;
-            background: #020617; display: flex;
+        /* --- LOGIN & MODAL CARDS --- */
+        #loginOverlay, #settingsModal {
+            position: fixed; inset: 0; display: flex;
             align-items: center; justify-content: center;
-            transition: opacity 0.5s ease;
+            background: var(--bg); z-index: 9999;
         }
+        #settingsModal { z-index: 10000; display: none; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
 
-        .login-card {
-            background: var(--glass); backdrop-filter: blur(30px);
-            padding: 50px; border-radius: 24px; border: 1px solid var(--border);
-            width: 90%; max-width: 400px; text-align: center;
+        .card {
+            background: var(--glass); backdrop-filter: blur(40px);
+            padding: 40px; border-radius: 28px; border: 1px solid var(--border);
+            width: 90%; max-width: 420px; text-align: center;
             box-shadow: 0 50px 100px rgba(0,0,0,0.8);
         }
 
-        .login-card h2 { font-size: 32px; margin: 0 0 10px 0; }
-        .login-card p { color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 30px; }
-
         .input-group { margin-bottom: 20px; text-align: left; position: relative; }
-        .input-group label { display: block; font-size: 10px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; font-weight: 700; }
+        .input-group label { display: block; font-size: 10px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; font-weight: 800; }
         
         input {
             width: 100%; background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border); border-radius: 12px;
-            padding: 16px; padding-right: 50px; /* Space for eyeball */
-            color: white; font-family: inherit; font-size: 15px;
-            outline: none; box-sizing: border-box;
+            border: 1px solid var(--border); border-radius: 14px;
+            padding: 16px; color: white; font-family: inherit; font-size: 15px; outline: none;
         }
         input:focus { border-color: var(--accent); background: rgba(255,255,255,0.1); }
 
-        /* Eyeball Icon Styling */
-        .toggle-pass {
-            position: absolute; right: 15px; top: 38px;
-            cursor: pointer; opacity: 0.5; transition: 0.3s;
-            display: flex; align-items: center;
-        }
-        .toggle-pass:hover { opacity: 1; color: var(--accent); }
-        .toggle-pass svg { width: 20px; height: 20px; fill: currentColor; }
-
-        .login-btn {
+        .btn {
             width: 100%; background: var(--accent); color: #020617;
-            border: none; padding: 18px; border-radius: 12px;
-            font-weight: 700; cursor: pointer; text-transform: uppercase;
-            letter-spacing: 1px; transition: 0.3s; margin-top: 10px;
+            border: none; padding: 18px; border-radius: 14px;
+            font-weight: 800; cursor: pointer; text-transform: uppercase; transition: 0.3s;
         }
-        .login-btn:hover { background: #fff; }
+        .btn:hover { background: #fff; transform: translateY(-2px); }
 
-        .error-msg { color: #ff4b2b; font-size: 12px; margin-top: 20px; display: none; font-weight: 700; }
+        .link-btn {
+            background: none; border: none; color: var(--accent);
+            font-size: 12px; cursor: pointer; margin-top: 20px; text-decoration: underline;
+            opacity: 0.7; transition: 0.3s;
+        }
+        .link-btn:hover { opacity: 1; }
 
         /* --- STAFF BOARD --- */
-        #mainContent { display: none; flex-direction: column; align-items: center; width: 100%; }
-        .header { width: 100%; padding: 40px; text-align: center; border-bottom: 1px solid var(--border); }
-        .board-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; width: 90%; max-width: 1300px; padding: 40px 0; }
-        .job-card { background: var(--glass); border: 1px solid var(--border); border-radius: 20px; padding: 25px; border-top: 2px solid var(--accent); }
+        #mainContent { display: none; flex-direction: column; width: 100%; }
+        .header { 
+            padding: 25px 40px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); background: rgba(2, 6, 23, 0.4);
+        }
+
+        .board-container { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 20px; padding: 40px; 
+        }
+
+        .job-card { 
+            background: var(--glass); border: 1px solid var(--border); 
+            border-radius: 20px; padding: 25px; border-top: 3px solid var(--accent);
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .status-badge { font-size: 10px; font-weight: 800; padding: 4px 12px; border-radius: 50px; background: rgba(0, 210, 255, 0.1); color: var(--accent); border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
-        <div class="login-card">
-            <h2>Security Shield</h2>
-            <p>Staff Board Encryption Active</p>
+        <div class="card">
+            <h2 style="margin-top:0;">Terminal Login</h2>
+            <p style="color:var(--accent); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px;">Authorized Staff Only</p>
             
             <div class="input-group">
-                <label>Terminal Login</label>
-                <input type="email" id="email" placeholder="Autocareplus@org.com" autocomplete="off">
+                <label>Terminal ID</label>
+                <input type="email" id="email" placeholder="Autocareplus@org.com">
             </div>
             
             <div class="input-group">
-                <label>Encrypted Key</label>
-                <input type="password" id="password" placeholder="••••••••" autocomplete="off">
-                <div class="toggle-pass" onclick="togglePassword()">
-                    <svg id="eyeIcon" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                </div>
+                <label>Security Key</label>
+                <input type="password" id="password" placeholder="••••••••">
             </div>
 
-            <button class="login-btn" id="loginBtn">Decrypt & Enter</button>
-            <div id="errorMessage" class="error-msg">ACCESS DENIED: INVALID CREDENTIALS</div>
+            <button class="btn" id="loginBtn">Authorize Entry</button>
+            <p id="loginError" style="color:var(--error); font-size:12px; display:none; margin-top:15px; font-weight:700;">ACCESS DENIED: INVALID HASH</p>
+            
+            <button class="link-btn" onclick="openSettings()">Change Terminal Password</button>
         </div>
     </div>
 
     <div id="mainContent">
         <div class="header">
-            <h1>Staff Operations Board</h1>
-            <p style="color: var(--accent); font-size: 12px; letter-spacing: 3px; margin: 0;">REAL-TIME CLOUD FEED</p>
+            <div>
+                <h1 style="margin:0; font-size:22px;">Operations Board</h1>
+                <span style="color:#10b981; font-size:10px; font-weight:800;">● LIVE CLOUD SYNC ACTIVE</span>
+            </div>
+            <button class="btn" style="width:auto; padding:10px 25px; font-size:11px;" onclick="openSettings()">Security Settings</button>
         </div>
         <div class="board-container" id="staffBoard"></div>
+    </div>
+
+    <div id="settingsModal">
+        <div class="card" style="max-width:380px; border-color: var(--accent);">
+            <h3 style="margin-top:0;">Update Security Key</h3>
+            <p style="font-size:12px; opacity:0.6; margin-bottom:25px;">This will update the access key for this terminal.</p>
+            
+            <div class="input-group">
+                <label>New Password</label>
+                <input type="password" id="newPass" placeholder="Min. 6 characters">
+            </div>
+            
+            <button class="btn" onclick="saveNewPassword()">Update & Refresh</button>
+            <button class="link-btn" style="color:white;" onclick="closeSettings()">Cancel</button>
+        </div>
     </div>
 
 <script type="module">
@@ -127,40 +153,49 @@
     async function sha256(message) {
         const msgUint8 = new TextEncoder().encode(message);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Show/Hide Password
-    window.togglePassword = function() {
-        const passField = document.getElementById('password');
-        const type = passField.getAttribute('type') === 'password' ? 'text' : 'password';
-        passField.setAttribute('type', type);
-    }
+    // Global UI Controls
+    window.openSettings = () => document.getElementById('settingsModal').style.display = 'flex';
+    window.closeSettings = () => document.getElementById('settingsModal').style.display = 'none';
 
-    const performLogin = async () => {
-        const emailInput = document.getElementById('email').value.trim();
-        const passInput = document.getElementById('password').value.trim();
-        const error = document.getElementById('errorMessage');
-        const targetHash = "a60965e69e46950275817d7b278156172551a1334f1989025176b1b70951a592"; // AutoCare123
-        const inputHash = await sha256(passInput);
+    // Save New Password Logic
+    window.saveNewPassword = async () => {
+        const newPass = document.getElementById('newPass').value.trim();
+        if(newPass.length < 6) return alert("Password must be at least 6 characters!");
+        
+        const newHash = await sha256(newPass);
+        localStorage.setItem('staffHash', newHash);
+        alert("Security key updated successfully.");
+        location.reload(); 
+    };
 
-        if(emailInput.toLowerCase() === "autocareplus@org.com" && inputHash === targetHash) {
-            document.getElementById('loginOverlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'flex';
-                startLiveSync();
-            }, 500);
+    // Login Logic
+    const attemptLogin = async () => {
+        const email = document.getElementById('email').value.trim().toLowerCase();
+        const pass = document.getElementById('password').value.trim();
+        
+        // Use custom hash if set, else use default "AutoCare123"
+        const defaultHash = "a60965e69e46950275817d7b278156172551a1334f1989025176b1b70951a592";
+        const targetHash = localStorage.getItem('staffHash') || defaultHash;
+        
+        const inputHash = await sha256(pass);
+
+        if(email === "autocareplus@org.com" && inputHash === targetHash) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'flex';
+            startLiveSync();
         } else {
-            error.style.display = 'block';
+            document.getElementById('loginError').style.display = 'block';
         }
     };
 
-    // Enter Key Listener
-    document.addEventListener('keydown', (e) => { if(e.key === 'Enter') performLogin(); });
-    document.getElementById('loginBtn').addEventListener('click', performLogin);
+    // Key Listeners
+    document.getElementById('loginBtn').addEventListener('click', attemptLogin);
+    document.addEventListener('keydown', (e) => { if(e.key === 'Enter') attemptLogin(); });
 
+    // Firebase Real-Time Feed
     function startLiveSync() {
         const q = query(collection(db, "jobs"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
@@ -171,13 +206,15 @@
                 const card = document.createElement('div');
                 card.className = 'job-card';
                 card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <span style="font-size:10px; font-weight:800; padding:5px 12px; border-radius:50px; background:rgba(0, 210, 255, 0.15); color:var(--accent);">${job.status || 'NEW'}</span>
-                        <small style="opacity:0.5;">#${doc.id.slice(0,5)}</small>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                        <span class="status-badge">${job.status || 'NEW'}</span>
+                        <small style="opacity:0.4;">#${doc.id.slice(0,5)}</small>
                     </div>
-                    <h2 style="margin: 15px 0 5px 0;">${job.customerName || 'N/A'}</h2>
-                    <div style="color:var(--accent); font-weight:700; font-size:14px; margin-bottom:10px;">${job.vehicleNumber || 'NO PLATE'}</div>
-                    <div style="font-size:14px; opacity:0.8;">Service: <b>${job.serviceType || 'Standard'}</b></div>
+                    <h3 style="margin:0; font-size:22px;">${job.customerName || 'N/A'}</h3>
+                    <div style="color:var(--accent); font-weight:700; margin:8px 0;">REG: ${job.vehicleNumber || 'NO PLATE'}</div>
+                    <div style="font-size:13px; opacity:0.7; border-top: 1px solid rgba(255,255,255,0.05); padding-top:10px; margin-top:10px;">
+                        Service: <b>${job.serviceType || 'Standard'}</b>
+                    </div>
                 `;
                 board.appendChild(card);
             });
