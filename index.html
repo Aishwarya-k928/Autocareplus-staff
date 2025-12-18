@@ -1,106 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoCare Plus | Insights Command</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --accent: #00d2ff;
+            --glass: rgba(10, 15, 28, 0.96);
+            --border: rgba(255, 255, 255, 0.12);
+            --bg: #020617;
+            --success: #10b981;
+            --mechanical: #f59e0b;
+            --diagnostic: #a855f7;
+        }
+
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: var(--bg); color: white; 
+            font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; 
+        }
+
+        /* Login Barrier */
+        #adminLock { 
+            position: fixed; inset: 0; background: var(--bg); 
+            display: flex; align-items: center; justify-content: center; z-index: 9999; 
+        }
+
+        .auth-card { 
+            background: var(--glass); padding: 40px; border-radius: 28px; 
+            border: 1px solid var(--border); width: 90%; max-width: 350px; text-align: center; 
+        }
+
+        /* Dashboard Layout */
+        #insightsContent { display: none; padding-bottom: 50px; }
+        
+        .header { 
+            padding: 20px 40px; border-bottom: 1px solid var(--border); 
+            background: rgba(2, 6, 23, 0.9); display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .insights-grid { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 25px; padding: 30px 40px; 
+        }
+
+        .stat-card { 
+            background: var(--glass); border: 1px solid var(--border); 
+            border-radius: 24px; padding: 25px; position: relative;
+        }
+
+        .stat-card h3 { margin: 0; font-size: 11px; text-transform: uppercase; color: var(--accent); letter-spacing: 2px; }
+        .big-val { font-size: 42px; font-weight: 800; margin: 15px 0 5px; }
+
+        /* Breakdown Table */
+        .table-wrap { margin: 0 40px; background: var(--glass); border-radius: 24px; border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 20px; font-size: 11px; color: var(--accent); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        td { padding: 20px; border-bottom: 1px solid var(--border); font-size: 14px; }
+
+        input { width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 15px; outline: none; }
+        .btn { width: 100%; background: var(--accent); color: black; border: none; padding: 16px; border-radius: 12px; font-weight: 800; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="adminLock">
+        <div class="auth-card">
+            <h1 style="font-size:22px; margin-bottom:10px;">Admin Insights</h1>
+            <p style="font-size:11px; opacity:0.6; margin-bottom:20px;">Management Authorization Required</p>
+            <input type="password" id="adminKey" placeholder="Enter Admin Key">
+            <button onclick="unlockInsights()" class="btn">Access Dashboard</button>
+            <p id="authError" style="color:#ff3131; font-size:11px; margin-top:10px; display:none;">Invalid Credentials</p>
+        </div>
+    </div>
+
+    <div id="insightsContent">
+        <div class="header">
+            <div>
+                <h1 style="margin:0; font-size:22px;">Revenue Intelligence</h1>
+                <span style="font-size:9px; color:var(--success); font-weight:800;">● LIVE FINANCIAL ENGINE</span>
+            </div>
+            <button onclick="window.location.href='staff.html'" style="background:none; border:1px solid var(--border); color:white; padding:8px 15px; border-radius:8px; font-size:11px; cursor:pointer;">Back to Workshop</button>
+        </div>
+
+        <div class="insights-grid">
+            <div class="stat-card" style="border-top: 3px solid var(--success);">
+                <h3>Unbilled Revenue (Ready)</h3>
+                <div class="big-val" id="readyRev">€0</div>
+                <small style="opacity:0.5;">Projected from current workflow</small>
+            </div>
+
+            <div class="stat-card">
+                <h3>7-Day Completed Trend</h3>
+                <div style="height: 120px;"><canvas id="trendChart"></canvas></div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Classification Mix</h3>
+                <div style="height: 120px; display: flex; justify-content: center;"><canvas id="mixChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Job Count</th>
+                        <th>Estimated Value (IE)</th>
+                    </tr>
+                </thead>
+                <tbody id="insightTable"></tbody>
+            </table>
+        </div>
+    </div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
     const db = getFirestore(initializeApp({
-        apiKey: "AIzaSyD9cPmUCMEtT7XukcAxmeS50jKh1A2f31Q", // Use your actual API Key
+        apiKey: "AIzaSyD9cPmUCMEtT7XukcAxmeS50jKh1A2f31Q",
         projectId: "auto-care-plus-e7fdf"
     }));
 
-    let data = [];
-    let isHistory = false;
-    const STAGES = ["NEW", "SERVICING", "READY", "COLLECTED"];
+    const PRICING = { GENERAL: 280, MECHANICAL: 450, DIAGNOSTIC: 75 };
 
-    // 1. IMPROVED TIMING LOGIC
-    // Added fallback for when serverTimestamp is null (during local latency)
-    function getTiming(createdAt, collectedAt, stage) {
-        const now = new Date();
-        const start = createdAt ? createdAt.toDate() : now; 
-        const diffMins = Math.floor((now - start) / 60000);
+    window.unlockInsights = async () => {
+        const input = document.getElementById('adminKey').value;
+        const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+        const hex = Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
         
-        let isArchived = false;
-        if (stage === "COLLECTED" && collectedAt) {
-            const collectTime = collectedAt.toDate ? collectedAt.toDate() : now;
-            if ((now - collectTime) / 60000 > 60) isArchived = true;
+        // Admin Key (Default: 1234)
+        if (hex === "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4") {
+            document.getElementById('adminLock').style.display = 'none';
+            document.getElementById('insightsContent').style.display = 'block';
+            initCharts();
+            startDataStream();
+        } else {
+            document.getElementById('authError').style.display = 'block';
         }
-
-        return {
-            text: diffMins >= 60 ? `${Math.floor(diffMins/60)}h ${diffMins%60}m` : `${diffMins}m`,
-            isDelayed: diffMins >= 360, // 6 Hours
-            isArchived: isArchived
-        };
-    }
-
-    // 2. RECTIFIED LISTEN FUNCTION
-    // Added { includeMetadataChanges: true } to solve "not reflecting" issue
-    function listen() {
-        const q = query(collection(db, "jobs"), orderBy("createdAt", "desc"));
-        
-        onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-            data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            draw();
-            
-            // Helpful for debugging: check console to see if data arrived
-            console.log("Data synced. Count:", data.length, "From cache:", snapshot.metadata.fromCache);
-        }, (error) => {
-            console.error("Firestore Error:", error);
-            alert("Connection error. Please refresh.");
-        });
-
-        // Force a UI refresh every minute for the timers
-        setInterval(draw, 60000);
-    }
-
-    // 3. RECTIFIED UI DRAW
-    window.draw = () => {
-        const searchTerm = document.getElementById('search').value.toLowerCase();
-        const histCont = document.getElementById('historyList');
-        if(isHistory) histCont.innerHTML = "";
-
-        STAGES.forEach(s => {
-            const lane = document.getElementById(`lane-${s}`); 
-            if(lane) lane.innerHTML = "";
-            
-            // Filter and Sort (Priority first)
-            const filtered = data.filter(j => 
-                (j.status || "NEW").toUpperCase() === s && 
-                (j.vehicleNumber || "").toLowerCase().includes(searchTerm)
-            ).sort((a, b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0));
-
-            filtered.forEach(job => {
-                const time = getTiming(job.createdAt, job.collectedAt, s);
-                
-                if (time.isArchived && !isHistory) return;
-                if (!time.isArchived && isHistory) return;
-
-                const card = document.createElement('div');
-                card.className = `vehicle-card ${job.isPriority ? 'high-prio' : ''} ${time.isDelayed ? 'delayed' : ''}`;
-                card.onclick = () => openN(job.id, job.vehicleNumber, job.notes);
-                card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <span class="reg-tag">REG: ${job.vehicleNumber}</span>
-                        <span class="duration-tag" style="color:${time.isDelayed ? 'var(--critical)' : 'inherit'}">${time.text}</span>
-                    </div>
-                    <h3 style="margin:8px 0 2px 0; font-size:17px; font-weight:700;">${job.customerName}</h3>
-                    <div style="font-size:11px; opacity:0.6; margin-bottom:10px;">${job.serviceType}</div>
-                    
-                    <div class="card-footer">
-                        <button class="ctrl-btn" onclick="move(event, '${job.id}', '${s}', -1)" ${s==='NEW'?'disabled':''}>←</button>
-                        <button class="ctrl-btn prio-toggle ${job.isPriority ? 'active' : ''}" 
-                                onclick="setPriority(event, '${job.id}', ${job.isPriority || false})">
-                                ${job.isPriority ? '★ Priority' : '☆ Normal'}
-                        </button>
-                        <button class="ctrl-btn" onclick="move(event, '${job.id}', '${s}', 1)" ${s==='COLLECTED'?'disabled':''}>→</button>
-                    </div>
-                `;
-                
-                if(isHistory) histCont.appendChild(card); 
-                else if(lane) lane.appendChild(card);
-            });
-        });
     };
 
-    // ... (Keep existing move/setPriority/verifyAdmin functions) ...
+    let tChart, mChart;
+    function initCharts() {
+        tChart = new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: { labels: ['M','T','W','T','F','S','S'], datasets: [{ data: [], borderColor: '#00d2ff', tension: 0.4, fill: true, backgroundColor: 'rgba(0,210,255,0.05)' }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
+        });
+        mChart = new Chart(document.getElementById('mixChart'), {
+            type: 'doughnut',
+            data: { labels: ['G','M','D'], datasets: [{ data: [0,0,0], backgroundColor: ['#10b981','#f59e0b','#a855f7'], borderWidth: 0 }] },
+            options: { maintainAspectRatio: false, cutout: '80%', plugins: { legend: { display: false } } }
+        });
+    }
 
-    listen();
+    function startDataStream() {
+        onSnapshot(collection(db, "jobs"), (snap) => {
+            let total = 0;
+            let cats = { GENERAL: 0, MECHANICAL: 0, DIAGNOSTIC: 0 };
+            
+            snap.forEach(d => {
+                const j = d.data();
+                const status = (j.status || "").toUpperCase();
+                const type = (j.serviceType || "").toLowerCase();
+                
+                let cat = "GENERAL";
+                if(type.includes("brake") || type.includes("repair") || type.includes("clutch")) cat = "MECHANICAL";
+                if(type.includes("scan") || type.includes("diag") || type.includes("light")) cat = "DIAGNOSTIC";
+
+                if(status === "READY") {
+                    total += PRICING[cat];
+                }
+                cats[cat]++;
+            });
+
+            document.getElementById("readyRev").innerText = "€" + total.toLocaleString();
+            mChart.data.datasets[0].data = [cats.GENERAL, cats.MECHANICAL, cats.DIAGNOSTIC];
+            mChart.update();
+
+            document.getElementById("insightTable").innerHTML = Object.keys(cats).map(k => `
+                <tr>
+                    <td style="font-weight:700;">${k}</td>
+                    <td>${cats[k]} Jobs</td>
+                    <td>€${(cats[k] * PRICING[k]).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        });
+    }
 </script>
+</body>
+</html>
