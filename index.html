@@ -20,45 +20,44 @@
 
         * { box-sizing: border-box; }
         body, html {
-            margin: 0; padding: 0; height: 100%; width: 100%;
-            background-color: var(--bg);
+            margin: 0; padding: 0; background-color: var(--bg);
             background-image: radial-gradient(circle at top right, #0a192f, #020617);
-            font-family: 'Plus Jakarta Sans', sans-serif; color: white; overflow-x: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif; color: white;
         }
 
-        /* --- AUTHENTICATION --- */
+        /* --- AUTH & HEADER --- */
         #loginOverlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 9999; }
         .card-auth { background: var(--glass); padding: 40px; border-radius: 28px; border: 1px solid var(--border); width: 90%; max-width: 420px; text-align: center; }
-        .input-group { margin-bottom: 20px; text-align: left; position: relative; }
-        .input-group label { display: block; font-size: 10px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; font-weight: 800; }
-        input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 14px; padding: 16px; color: white; outline: none; }
-        .btn { width: 100%; background: var(--accent); color: #020617; border: none; padding: 18px; border-radius: 14px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
-
+        .header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
+        
         /* --- BOARD --- */
         #mainContent { display: none; flex-direction: column; width: 100%; opacity: 0; transition: 0.8s; }
-        .header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
         .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 25px; padding: 40px; }
 
         .job-card { background: var(--glass); border: 1px solid var(--border); border-radius: 24px; padding: 25px; transition: 0.3s ease; position: relative; }
-        .job-card:hover { border-color: var(--accent); transform: translateY(-5px); }
-
+        
+        /* --- STATUS & TIMER --- */
         .status-badge { font-size: 10px; font-weight: 800; padding: 5px 12px; border-radius: 50px; text-transform: uppercase; }
         .status-new { color: var(--new); border: 1px solid var(--new); }
         .status-servicing { color: var(--servicing); border: 1px solid var(--servicing); }
         .status-ready { color: var(--ready); border: 1px solid var(--ready); }
         .status-collected { color: var(--collected); border: 1px solid var(--collected); }
 
-        /* --- TIMER HUD --- */
-        .timer-hud {
-            display: flex; align-items: center; gap: 8px;
-            margin-top: 15px; font-size: 11px; color: #94a3b8;
-            font-weight: 700; background: rgba(255,255,255,0.03);
-            padding: 8px 12px; border-radius: 10px; width: fit-content;
-        }
+        .timer-hud { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #94a3b8; font-weight: 700; background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 8px; }
         .timer-hud.alert { color: var(--critical); background: rgba(255, 75, 43, 0.1); border: 1px solid rgba(255, 75, 43, 0.2); }
-        .pulse { height: 6px; width: 6px; background: var(--accent); border-radius: 50%; animation: blink 2s infinite; }
-        .timer-hud.alert .pulse { background: var(--critical); box-shadow: 0 0 10px var(--critical); }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* --- ACTION BUTTONS --- */
+        .action-btn {
+            width: 100%; margin-top: 20px; padding: 14px; border-radius: 12px; border: none;
+            font-family: inherit; font-weight: 800; font-size: 12px; text-transform: uppercase;
+            cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-move { background: var(--accent); color: #020617; }
+        .btn-move:hover { background: #fff; transform: scale(1.02); }
+        .btn-collected { background: rgba(255,255,255,0.1); color: white; border: 1px solid var(--border); }
+
+        input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 14px; padding: 16px; color: white; outline: none; margin-bottom: 15px; }
+        .btn-login { width: 100%; background: var(--accent); color: #020617; border: none; padding: 18px; border-radius: 14px; font-weight: 800; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -66,15 +65,9 @@
     <div id="loginOverlay">
         <div class="card-auth">
             <h2>Staff Access</h2>
-            <div class="input-group">
-                <label>Terminal ID</label>
-                <input type="email" id="email" placeholder="autocareplus@org.com">
-            </div>
-            <div class="input-group">
-                <label>Security Key</label>
-                <input type="password" id="password" placeholder="••••••••">
-            </div>
-            <button class="btn" onclick="attemptLogin()">Decrypt Board</button>
+            <input type="email" id="email" placeholder="autocareplus@org.com">
+            <input type="password" id="password" placeholder="Security Key">
+            <button class="btn-login" onclick="attemptLogin()">Authorize Terminal</button>
         </div>
     </div>
 
@@ -82,7 +75,7 @@
         <div class="header">
             <div>
                 <h1 style="margin:0; font-size:20px;">Workshop Operations</h1>
-                <span style="color:var(--accent); font-size:9px; font-weight:800;">● 6HR CRITICAL ALERT ENABLED</span>
+                <span style="color:var(--accent); font-size:9px; font-weight:800;">● MANUAL WORKFLOW CONTROL ENABLED</span>
             </div>
         </div>
         <div class="board-container" id="staffBoard"></div>
@@ -90,12 +83,32 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
     const db = getFirestore(initializeApp({
         apiKey: "AIzaSyD9cPmUCMEtT7XukcAxmeS50jKh1A2f31Q",
         projectId: "auto-care-plus-e7fdf"
     }));
+
+    // --- WORKFLOW LOGIC ---
+    const FLOW = {
+        "NEW": { next: "SERVICING", label: "Start Servicing →" },
+        "SERVICING": { next: "READY", label: "Mark as Ready ✅" },
+        "READY": { next: "COLLECTED", label: "Mark Collected 🔑" },
+        "COLLECTED": { next: null, label: "Job Finalized" }
+    };
+
+    window.moveStep = async (jobId, currentStatus) => {
+        const nextStatus = FLOW[currentStatus].next;
+        if (!nextStatus) return;
+        
+        try {
+            const jobRef = doc(db, "jobs", jobId);
+            await updateDoc(jobRef, { status: nextStatus });
+        } catch (e) {
+            console.error("Error updating status:", e);
+        }
+    };
 
     async function sha256(msg) {
         const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
@@ -103,10 +116,9 @@
     }
 
     window.attemptLogin = async () => {
-        const email = document.getElementById('email').value.trim().toLowerCase();
         const pass = document.getElementById('password').value;
         const target = localStorage.getItem('staffHash') || "a60965e69e46950275817d7b278156172551a1334f1989025176b1b70951a592";
-        if(email === "autocareplus@org.com" && await sha256(pass) === target) {
+        if(await sha256(pass) === target) {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainContent').style.display = 'flex';
             setTimeout(() => document.getElementById('mainContent').style.opacity = '1', 50);
@@ -119,19 +131,9 @@
             const span = hud.querySelector('span');
             const seconds = parseInt(span.getAttribute('data-time'));
             if(seconds > 0) {
-                const now = new Date();
-                const diffMins = Math.floor((now - new Date(seconds * 1000)) / 60000);
-                
-                // Set text
-                if (diffMins < 60) span.innerText = `${diffMins}m`;
-                else span.innerText = `${Math.floor(diffMins/60)}h ${diffMins%60}m`;
-
-                // 6-Hour Alert Logic (360 minutes)
-                if (diffMins >= 360) {
-                    hud.classList.add('alert');
-                } else {
-                    hud.classList.remove('alert');
-                }
+                const diffMins = Math.floor((new Date() - new Date(seconds * 1000)) / 60000);
+                span.innerText = diffMins < 60 ? `${diffMins}m` : `${Math.floor(diffMins/60)}h ${diffMins%60}m`;
+                if (diffMins >= 360) hud.classList.add('alert');
             }
         });
     }
@@ -141,10 +143,10 @@
         onSnapshot(q, (snapshot) => {
             const board = document.getElementById('staffBoard');
             board.innerHTML = ""; 
-            snapshot.forEach((doc) => {
-                const job = doc.data();
+            snapshot.forEach((d) => {
+                const job = d.data();
                 const status = (job.status || 'NEW').toUpperCase();
-                if (!["NEW", "SERVICING", "READY", "COLLECTED"].includes(status)) return;
+                if (!FLOW[status]) return;
 
                 const card = document.createElement('div');
                 card.className = 'job-card';
@@ -152,15 +154,19 @@
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <span class="status-badge status-${status.toLowerCase()}">${status}</span>
                         <div class="timer-hud">
-                            <div class="pulse"></div>
                             <span data-time="${job.createdAt ? job.createdAt.seconds : 0}">--</span>
                         </div>
                     </div>
                     <h2 style="margin:0; font-size:22px;">${job.customerName || 'N/A'}</h2>
                     <div style="color:var(--accent); font-weight:800; margin:8px 0; font-size:13px;">REG: ${job.vehicleNumber || '---'}</div>
-                    <div style="margin-top:15px; padding-top:15px; border-top:1px solid var(--border); font-size:13px;">
-                        Task: <b style="color:white;">${job.serviceType || 'General Service'}</b>
-                    </div>
+                    <div style="margin-top:15px; font-size:13px;">Task: <b style="color:white;">${job.serviceType || 'General Service'}</b></div>
+                    
+                    ${FLOW[status].next ? 
+                        `<button class="action-btn btn-move" onclick="moveStep('${d.id}', '${status}')">
+                            ${FLOW[status].label}
+                        </button>` : 
+                        `<button class="action-btn btn-collected" disabled>Job Archive</button>`
+                    }
                 `;
                 board.appendChild(card);
             });
