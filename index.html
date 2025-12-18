@@ -12,17 +12,17 @@
             --border: rgba(255, 255, 255, 0.12);
             --bg: #020617;
             --priority: #39ff14; /* Neon Green */
-            --critical: #ff3131; /* Red Alert */
+            --critical: #ff3131; /* Red for 6hr+ delay */
         }
 
         body, html { margin: 0; padding: 0; background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; height: 100%; }
         
-        /* --- LOGIN --- */
+        /* --- INITIAL LOGIN GATE --- */
         #loginGate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 10000; }
         .auth-card { background: var(--glass); padding: 40px; border-radius: 28px; border: 1px solid var(--border); width: 320px; text-align: center; }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: white; outline: none; box-sizing: border-box; }
 
-        /* --- DASHBOARD --- */
+        /* --- WORKSHOP APP --- */
         #workshopApp { display: none; height: 100%; flex-direction: column; }
         .header { padding: 15px 30px; border-bottom: 1px solid var(--border); background: rgba(2, 6, 23, 0.9); display: flex; justify-content: space-between; align-items: center; }
 
@@ -31,40 +31,44 @@
         .lane-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--accent); }
         .lane-body { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
 
-        /* --- CARDS --- */
+        /* --- VEHICLE CARDS --- */
         .vehicle-card { background: var(--glass); border: 1px solid var(--border); border-radius: 18px; padding: 18px; position: relative; transition: 0.3s; }
-        .vehicle-card.high-prio { border: 2px solid var(--priority); box-shadow: 0 0 15px rgba(57, 255, 20, 0.2); }
-        .vehicle-card.delayed { border: 2px solid var(--critical); }
+        /* Priority Neon Green */
+        .vehicle-card.high-prio { border: 2.2px solid var(--priority); box-shadow: 0 0 15px rgba(57, 255, 20, 0.15); }
+        /* 6-Hour Critical Red */
+        .vehicle-card.delayed { border: 2.2px solid var(--critical); }
 
-        .time-tag { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); color: #94a3b8; }
-        .delayed .time-tag { color: var(--critical); background: rgba(255, 49, 49, 0.1); }
+        .time-badge { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); color: #94a3b8; }
+        .delayed .time-badge { color: var(--critical); background: rgba(255, 49, 49, 0.1); }
 
         .card-footer { display: flex; gap: 6px; margin-top: 15px; }
-        .ctrl-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 8px; cursor: pointer; flex: 1; font-size: 11px; }
-        .ctrl-btn:hover:not(:disabled) { background: white; color: black; }
-        .prio-btn { width: 40px; flex: none; color: #444; border: 1px solid var(--border); }
+        .nav-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 8px; cursor: pointer; flex: 1; font-size: 12px; }
+        .nav-btn:hover:not(:disabled) { background: white; color: black; }
+        .prio-btn { width: 40px; flex: none; color: #444; border: 1px solid var(--border); background: rgba(255,255,255,0.05); cursor: pointer; padding: 8px; border-radius: 8px; }
         .prio-btn.active { color: var(--priority); border-color: var(--priority); }
 
-        /* --- ADMIN PROMPT --- */
-        #adminPrompt { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 11000; align-items: center; justify-content: center; }
+        /* --- ADMIN SECONDARY PROMPT --- */
+        #adminGate { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 11000; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
     <div id="loginGate">
         <div class="auth-card">
-            <h1 style="font-size:22px;">AutoCare Plus</h1>
-            <input type="password" id="staffPass" placeholder="Staff Key">
+            <h1 style="font-size:22px; margin-bottom:10px;">AutoCare Plus</h1>
+            <p style="font-size:11px; opacity:0.6; margin-bottom:20px;">Staff Terminal Entry</p>
+            <input type="password" id="staffPass" placeholder="Enter Staff Key">
             <button onclick="unlockStaff()" style="width:100%; padding:15px; background:var(--accent); border:none; border-radius:12px; font-weight:800; cursor:pointer;">Enter Workshop</button>
         </div>
     </div>
 
-    <div id="adminPrompt">
+    <div id="adminGate">
         <div class="auth-card" style="border-color: #f59e0b;">
-            <h2 style="margin:0; color:var(--accent);">Admin Insights</h2>
-            <input type="password" id="adminPass" placeholder="Admin Key">
+            <h2 style="margin:0; color:var(--accent);">Admin Verification</h2>
+            <p style="font-size:11px; opacity:0.6; margin:10px 0;">Manager Key required for Insights</p>
+            <input type="password" id="adminPass" placeholder="Enter Admin Key">
             <button onclick="goToInsights()" style="width:100%; padding:15px; background:#f59e0b; border:none; border-radius:12px; font-weight:800; cursor:pointer;">Authorize & View</button>
-            <button onclick="document.getElementById('adminPrompt').style.display='none'" style="background:none; border:none; color:white; margin-top:15px; cursor:pointer;">Cancel</button>
+            <button onclick="document.getElementById('adminGate').style.display='none'" style="background:none; border:none; color:white; margin-top:15px; cursor:pointer; font-size:11px;">Cancel</button>
         </div>
     </div>
 
@@ -76,7 +80,7 @@
             </div>
             <div style="display:flex; gap:12px; align-items:center;">
                 <input type="text" id="search" style="width:180px; margin:0; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:10px; border-radius:8px;" placeholder="Search Reg..." onkeyup="draw()">
-                <button onclick="document.getElementById('adminPrompt').style.display='flex'" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px 15px; border-radius:10px; font-weight:800; font-size:11px; cursor:pointer;">Insights Hub</button>
+                <button onclick="document.getElementById('adminGate').style.display='flex'" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px 15px; border-radius:10px; font-weight:800; font-size:11px; cursor:pointer;">Insights Hub</button>
             </div>
         </div>
 
@@ -99,7 +103,7 @@
 
     const STAGES = ["NEW", "SERVICING", "READY", "COLLECTED"];
 
-    // --- NAVIGATION & AUTH ---
+    // STAFF LOGIN LOGIC
     window.unlockStaff = async () => {
         const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(document.getElementById('staffPass').value));
         const hex = Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -107,48 +111,50 @@
             document.getElementById('loginGate').style.display = 'none';
             document.getElementById('workshopApp').style.display = 'flex';
             startLiveBoard();
-        } else { alert("Invalid Key"); }
+        } else { alert("Invalid Staff Key"); }
     };
 
+    // SECURE REDIRECT TO INSIGHTS
     window.goToInsights = async () => {
         const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(document.getElementById('adminPass').value));
         const hex = Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
         if (hex === "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4") {
             window.location.href = "insights.html"; 
-        } else { alert("Unauthorized"); }
+        } else { alert("Unauthorized Access"); }
     };
 
-    // --- WORKFLOW CONTROLS ---
-    window.move = async (e, id, cur, dir) => {
+    // WORKFLOW NAVIGATION CONTROLS
+    window.moveStatus = async (e, id, current, dir) => {
         e.stopPropagation();
-        const nextIdx = STAGES.indexOf(cur) + dir;
+        const nextIdx = STAGES.indexOf(current) + dir;
         if (nextIdx >= 0 && nextIdx < STAGES.length) {
             await updateDoc(doc(db, "jobs", id), { status: STAGES[nextIdx] });
         }
     };
 
+    // NEON PRIORITY TOGGLE
     window.togglePrio = async (e, id, p) => {
         e.stopPropagation();
         await updateDoc(doc(db, "jobs", id), { isPriority: !p });
     };
 
-    // --- RENDER ENGINE ---
-    let localData = [];
+    let jobsData = [];
     function startLiveBoard() {
         onSnapshot(query(collection(db, "jobs"), orderBy("createdAt", "desc")), { includeMetadataChanges: true }, (s) => {
-            localData = s.docs.map(d => ({ id: d.id, ...d.data() }));
+            jobsData = s.docs.map(d => ({ id: d.id, ...d.data() }));
             draw();
         });
-        setInterval(draw, 60000);
+        setInterval(draw, 60000); 
     }
 
     window.draw = () => {
         const q = document.getElementById('search').value.toLowerCase();
         STAGES.forEach(s => {
             const lane = document.getElementById(`lane-${s}`); lane.innerHTML = "";
-            localData.filter(j => (j.status || "NEW").toUpperCase() === s && (j.vehicleNumber || "").toLowerCase().includes(q))
+            jobsData.filter(j => (j.status || "NEW").toUpperCase() === s && (j.vehicleNumber || "").toLowerCase().includes(q))
                 .sort((a,b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0)).forEach(job => {
                 
+                // DURATION & 6hr ALERT LOGIC
                 const mins = job.createdAt ? Math.floor((new Date() - job.createdAt.toDate()) / 60000) : 0;
                 const timeStr = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins}m`;
 
@@ -157,15 +163,15 @@
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:start;">
                         <span style="color:var(--accent); font-weight:800; font-size:12px;">REG: ${job.vehicleNumber}</span>
-                        <span class="time-tag">${timeStr}</span>
+                        <span class="time-badge">${timeStr}</span>
                     </div>
                     <h3 style="margin:8px 0 2px 0; font-size:17px;">${job.customerName}</h3>
                     <div style="font-size:11px; opacity:0.6;">${job.serviceType}</div>
                     
                     <div class="card-footer">
-                        <button class="ctrl-btn" onclick="move(event, '${job.id}', '${s}', -1)" ${s==='NEW'?'disabled':''}>←</button>
-                        <button class="ctrl-btn prio-btn ${job.isPriority ? 'active' : ''}" onclick="togglePrio(event, '${job.id}', ${job.isPriority || false})">★</button>
-                        <button class="ctrl-btn" onclick="move(event, '${job.id}', '${s}', 1)" ${s==='COLLECTED'?'disabled':''}>→</button>
+                        <button class="nav-btn" onclick="moveStatus(event, '${job.id}', '${s}', -1)" ${s==='NEW'?'disabled':''}>←</button>
+                        <button class="prio-btn ${job.isPriority ? 'active' : ''}" onclick="togglePrio(event, '${job.id}', ${job.isPriority || false})">★</button>
+                        <button class="nav-btn" onclick="moveStatus(event, '${job.id}', '${s}', 1)" ${s==='COLLECTED'?'disabled':''}>→</button>
                     </div>
                 `;
                 lane.appendChild(card);
