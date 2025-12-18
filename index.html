@@ -17,60 +17,64 @@
 
         body, html { margin: 0; padding: 0; background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; height: 100%; }
         
-        /* --- LOGIN BARRIER --- */
-        #mainLogin { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        /* --- PRIMARY LOGIN (Staff Access) --- */
+        #staffLoginGate { 
+            position: fixed; inset: 0; background: var(--bg); 
+            display: flex; align-items: center; justify-content: center; z-index: 10000; 
+        }
         .auth-card { background: var(--glass); padding: 40px; border-radius: 28px; border: 1px solid var(--border); width: 320px; text-align: center; }
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: white; outline: none; box-sizing: border-box; }
-        .btn-primary { width: 100%; padding: 15px; background: var(--accent); color: black; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; }
+        .btn-main { width: 100%; padding: 15px; background: var(--accent); color: black; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; }
 
-        /* --- DASHBOARD --- */
+        /* --- DASHBOARD DISPLAY --- */
         #workshopApp { display: none; height: 100%; flex-direction: column; }
         .header { padding: 15px 30px; border-bottom: 1px solid var(--border); background: rgba(2, 6, 23, 0.9); display: flex; justify-content: space-between; align-items: center; }
-
+        
+        /* --- KANBAN VIEW --- */
         .workshop-floor { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px; height: calc(100vh - 85px); overflow-x: auto; }
         .lane { background: rgba(255,255,255,0.01); border-radius: 20px; border: 1px solid var(--border); display: flex; flex-direction: column; min-width: 280px; }
         .lane-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--accent); }
         .lane-body { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
 
-        /* --- CARDS --- */
+        /* --- VEHICLE CARDS --- */
         .vehicle-card { background: var(--glass); border: 1px solid var(--border); border-radius: 18px; padding: 18px; position: relative; }
         .vehicle-card.high-prio { border: 2px solid var(--priority); }
         .vehicle-card.delayed { border: 2px solid var(--critical); }
 
-        /* --- SECONDARY ADMIN PROMPT --- */
-        #adminPrompt { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 11000; align-items: center; justify-content: center; }
+        /* --- SECONDARY ADMIN LOCK --- */
+        #adminGate { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 11000; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <div id="mainLogin">
+    <div id="staffLoginGate">
         <div class="auth-card">
             <h1 style="font-size:22px; margin-bottom:5px;">AutoCare Plus</h1>
-            <p style="font-size:11px; opacity:0.6; margin-bottom:20px;">Staff Terminal Login</p>
+            <p style="font-size:11px; opacity:0.6; margin-bottom:20px;">Staff Terminal Entry</p>
             <input type="password" id="staffPassInput" placeholder="Enter Staff Key">
-            <button class="btn-primary" onclick="loginToStaff()">Enter Workshop</button>
+            <button class="btn-main" onclick="enterWorkshop()">Login to Staff Page</button>
         </div>
     </div>
 
-    <div id="adminPrompt">
-        <div class="auth-card" style="border-color: var(--servicing);">
-            <h2 style="margin:0; color:var(--accent);">Admin Access</h2>
-            <p style="font-size:11px; opacity:0.6; margin:10px 0;">Enter Management Key to view Insights</p>
+    <div id="adminGate">
+        <div class="auth-card" style="border-color: #f59e0b;">
+            <h2 style="margin:0; color:var(--accent);">Admin Verification</h2>
+            <p style="font-size:11px; opacity:0.6; margin:10px 0;">Manager Key required for Revenue Data</p>
             <input type="password" id="adminPassInput" placeholder="Enter Admin Key">
-            <button class="btn-primary" style="background:#f59e0b;" onclick="verifyAndGoToInsights()">Authorize Insights</button>
-            <button onclick="document.getElementById('adminPrompt').style.display='none'" style="background:none; border:none; color:white; margin-top:15px; cursor:pointer; font-size:11px;">Cancel</button>
+            <button class="btn-main" style="background:#f59e0b;" onclick="verifyAdminAndRedirect()">Access Insights</button>
+            <button onclick="document.getElementById('adminGate').style.display='none'" style="background:none; border:none; color:white; margin-top:15px; cursor:pointer; font-size:11px;">Cancel</button>
         </div>
     </div>
 
     <div id="workshopApp">
         <div class="header">
             <div>
-                <h1 style="margin:0; font-size:18px;">Workshop Floor</h1>
-                <span style="font-size:9px; color:var(--priority);">LIVE OPERATIONS</span>
+                <h1 style="margin:0; font-size:18px;">Workshop Operations</h1>
+                <span style="font-size:9px; color:var(--priority);">● TERMINAL ACTIVE</span>
             </div>
             <div style="display:flex; gap:10px;">
                 <input type="text" id="search" style="width:180px; margin:0;" placeholder="Search Reg..." onkeyup="draw()">
-                <button class="btn-primary" style="width:auto; padding:8px 15px; font-size:11px; background:transparent; border:1px solid var(--accent); color:var(--accent);" onclick="document.getElementById('adminPrompt').style.display='flex'">Insights Hub</button>
+                <button class="btn-main" style="width:auto; padding:8px 15px; font-size:11px; background:transparent; border:1px solid var(--accent); color:var(--accent);" onclick="document.getElementById('adminGate').style.display='flex'">Insights Hub</button>
             </div>
         </div>
 
@@ -91,35 +95,35 @@
         projectId: "auto-care-plus-e7fdf"
     }));
 
-    // --- LOGIN ROUTING ---
-    window.loginToStaff = async () => {
+    // --- NAVIGATION ROUTING ---
+    window.enterWorkshop = async () => {
         const input = document.getElementById('staffPassInput').value;
         const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
         const hex = Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
         
-        // This takes you to the STAFF PAGE
-        const staffTarget = localStorage.getItem('staffHash') || "a60965e69e46950275817d7b278156172551a1334f1989025176b1b70951a592";
-        if (hex === staffTarget) {
-            document.getElementById('mainLogin').style.display = 'none';
+        // DIRECTS TO STAFF PAGE ONLY
+        const staffHash = localStorage.getItem('staffHash') || "a60965e69e46950275817d7b278156172551a1334f1989025176b1b70951a592";
+        if (hex === staffHash) {
+            document.getElementById('staffLoginGate').style.display = 'none';
             document.getElementById('workshopApp').style.display = 'flex';
-            startWorkshop();
+            startWorkshopFeed();
         } else { alert("Invalid Staff Key"); }
     };
 
-    window.verifyAndGoToInsights = async () => {
+    window.verifyAdminAndRedirect = async () => {
         const input = document.getElementById('adminPassInput').value;
         const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
         const hex = Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
         
-        // This takes you to the INSIGHTS PAGE
+        // REDIRECTS TO INSIGHTS PAGE
         if (hex === "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4") {
             window.location.href = "insights.html"; 
-        } else { alert("Incorrect Admin Key"); }
+        } else { alert("Incorrect Manager Key"); }
     };
 
-    // --- WORKFLOW ENGINE ---
+    // --- WORKSHOP FEED ---
     let jobs = [];
-    function startWorkshop() {
+    function startWorkshopFeed() {
         onSnapshot(query(collection(db, "jobs"), orderBy("createdAt", "desc")), (snap) => {
             jobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             draw();
