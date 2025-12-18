@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AutoCare Plus | Staff Command</title>
+    <title>AutoCare Plus | Command Board</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
@@ -15,85 +15,68 @@
             --servicing: #f59e0b;
             --ready: #10b981;
             --collected: #64748b;
+            --priority: #ff3e3e;
         }
 
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
         
-        /* --- HEADER & NAVIGATION --- */
-        .top-bar { 
-            padding: 20px 40px; border-bottom: 1px solid var(--border); 
-            background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(10px);
-            position: sticky; top: 0; z-index: 100;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .top-bar { padding: 15px 30px; border-bottom: 1px solid var(--border); background: rgba(2, 6, 23, 0.9); display: flex; justify-content: space-between; align-items: center; }
+        .search-input { background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 10px 15px; border-radius: 8px; color: white; width: 250px; outline: none; }
 
-        .search-box {
-            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-            padding: 10px 20px; border-radius: 12px; color: white; width: 300px; outline: none;
-        }
+        .kanban-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 20px; height: calc(100vh - 80px); overflow-x: auto; }
+        .column { background: rgba(255,255,255,0.02); border-radius: 16px; display: flex; flex-direction: column; min-width: 300px; border: 1px solid var(--border); }
+        .column-header { padding: 15px; border-bottom: 1px solid var(--border); border-top: 3px solid transparent; }
+        .lane { flex-grow: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
 
-        .tab-bar { display: flex; gap: 15px; margin-top: 15px; padding: 0 40px; }
-        .tab { padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 800; font-size: 11px; color: #94a3b8; border: 1px solid transparent; }
-        .tab.active { background: var(--accent); color: #020617; }
+        .job-card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 15px; position: relative; cursor: pointer; }
+        .job-card:hover { border-color: var(--accent); }
+        .job-card.high-priority { border: 1.5px solid var(--priority); }
+        
+        .note-preview { font-size: 10px; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 4px; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* --- CONTENT --- */
-        .content-section { display: none; padding: 30px 40px; }
-        .content-section.active { display: block; }
-        .board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        /* --- NOTES MODAL --- */
+        #notesModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: var(--glass); border: 1px solid var(--border); width: 400px; border-radius: 20px; padding: 30px; }
+        textarea { width: 100%; height: 120px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; color: white; padding: 15px; resize: none; margin: 15px 0; outline: none; }
 
-        /* --- JOB CARDS --- */
-        .job-card { 
-            background: var(--glass); border: 1px solid var(--border); border-radius: 20px; 
-            padding: 20px; transition: 0.3s;
-        }
-        .badge { font-size: 9px; font-weight: 800; padding: 4px 10px; border-radius: 50px; text-transform: uppercase; border: 1px solid; }
-        .status-new { color: var(--new); }
-        .status-servicing { color: var(--servicing); }
-        .status-ready { color: var(--ready); }
-        .status-collected { color: var(--collected); }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .move-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 8px; cursor: pointer; flex: 1; }
+        .save-btn { background: var(--accent); color: #020617; border: none; font-weight: 800; border-radius: 8px; padding: 10px 20px; cursor: pointer; width: 100%; }
 
-        /* --- CONTROLS --- */
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .nav-btn { 
-            padding: 12px; border-radius: 10px; border: 1px solid var(--border); 
-            background: rgba(255,255,255,0.03); color: white; font-weight: 800; font-size: 10px; cursor: pointer; 
-        }
-        .nav-btn:hover:not(:disabled) { background: white; color: black; }
-        .nav-btn:disabled { opacity: 0.1; cursor: not-allowed; }
-
-        #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 3000; }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
-        <div style="text-align:center; background:var(--glass); padding:40px; border-radius:28px; border: 1px solid var(--border); width: 350px;">
-            <h2>Staff Portal</h2>
-            <input type="password" id="password" placeholder="Terminal Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:10px; border:none; background:rgba(255,255,255,0.1); color:white;">
-            <button onclick="attemptLogin()" style="width:100%; padding:15px; background:var(--accent); border:none; border-radius:10px; font-weight:800; cursor:pointer;">Enter Workshop</button>
+        <div style="text-align:center; background:var(--glass); padding:40px; border-radius:28px; border: 1px solid var(--border); width: 320px;">
+            <h2>Workshop Auth</h2>
+            <input type="password" id="password" placeholder="Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:10px; border:none; background:rgba(255,255,255,0.1); color:white;">
+            <button onclick="attemptLogin()" class="save-btn">Enter Terminal</button>
+        </div>
+    </div>
+
+    <div id="notesModal">
+        <div class="modal-content">
+            <h3 id="modalReg" style="margin:0; color:var(--accent);">REG-1234</h3>
+            <p id="modalName" style="margin:5px 0; opacity:0.6;">Customer Name</p>
+            <textarea id="noteInput" placeholder="Add status notes (e.g. 'Waiting for brake pads', 'Client called')"></textarea>
+            <button class="save-btn" id="saveNoteBtn">Save Update</button>
+            <button class="move-btn" style="margin-top:10px; width:100%;" onclick="closeNotes()">Close</button>
         </div>
     </div>
 
     <div id="mainUI" style="display:none;">
         <div class="top-bar">
-            <div>
-                <h1 style="margin:0; font-size:18px;">Workshop Terminal</h1>
-                <span style="font-size:9px; color:var(--ready);">● LIVE SYNC ACTIVE</span>
-            </div>
-            <input type="text" id="searchInput" class="search-box" placeholder="Search Reg or Name..." onkeyup="filterJobs()">
+            <div><h1 style="margin:0; font-size:18px;">Workshop Kanban</h1></div>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search Registration..." onkeyup="renderBoard()">
         </div>
 
-        <div class="tab-bar">
-            <div class="tab active" onclick="switchTab('active', event)">ACTIVE WORKFLOW</div>
-            <div class="tab" onclick="switchTab('archive', event)">HISTORY (COLLECTED)</div>
-        </div>
-
-        <div id="activeSection" class="content-section active">
-            <div class="board-grid" id="activeBoard"></div>
-        </div>
-
-        <div id="archiveSection" class="content-section">
-            <div class="board-grid" id="archiveBoard"></div>
+        <div class="kanban-container">
+            <div class="column"><div class="column-header" style="border-color: var(--new); color:var(--new);">NEW</div><div class="lane" id="lane-NEW"></div></div>
+            <div class="column"><div class="column-header" style="border-color: var(--servicing); color:var(--servicing);">SERVICING</div><div class="lane" id="lane-SERVICING"></div></div>
+            <div class="column"><div class="column-header" style="border-color: var(--ready); color:var(--ready);">READY</div><div class="lane" id="lane-READY"></div></div>
+            <div class="column"><div class="column-header" style="border-color: var(--collected); color:var(--collected);">COLLECTED</div><div class="lane" id="lane-COLLECTED"></div></div>
         </div>
     </div>
 
@@ -108,78 +91,74 @@
 
     const STAGES = ["NEW", "SERVICING", "READY", "COLLECTED"];
     let allJobs = [];
-
-    window.switchTab = (type, e) => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-        e.target.classList.add('active');
-        document.getElementById(type + 'Section').classList.add('active');
-    };
-
-    window.moveStatus = async (jobId, current, direction) => {
-        const idx = STAGES.indexOf(current);
-        const nextIdx = idx + direction;
-        if (nextIdx >= 0 && nextIdx < STAGES.length) {
-            await updateDoc(doc(db, "jobs", jobId), { status: STAGES[nextIdx] });
-        }
-    };
-
-    window.filterJobs = () => {
-        const queryText = document.getElementById('searchInput').value.toLowerCase();
-        renderBoards(queryText);
-    };
+    let currentJobId = null;
 
     window.attemptLogin = async () => {
         const pass = document.getElementById('password').value;
         const target = localStorage.getItem('staffHash') || "a60965e69e46950275817d7b278156172551a1334f1989025176b1b70951a592";
         const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass));
         const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        if (hex === target) { document.getElementById('loginOverlay').style.display='none'; document.getElementById('mainUI').style.display='block'; startListening(); }
+    };
 
-        if (hex === target) {
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainUI').style.display = 'block';
-            startListening();
-        }
+    window.openNotes = (id, reg, name, note) => {
+        currentJobId = id;
+        document.getElementById('modalReg').innerText = reg;
+        document.getElementById('modalName').innerText = name;
+        document.getElementById('noteInput').value = note || "";
+        document.getElementById('notesModal').style.display = 'flex';
+    };
+
+    window.closeNotes = () => document.getElementById('notesModal').style.display = 'none';
+
+    document.getElementById('saveNoteBtn').onclick = async () => {
+        const text = document.getElementById('noteInput').value;
+        await updateDoc(doc(db, "jobs", currentJobId), { notes: text });
+        closeNotes();
+    };
+
+    window.moveStatus = async (e, id, current, dir) => {
+        e.stopPropagation();
+        const nextIdx = STAGES.indexOf(current) + dir;
+        if (nextIdx >= 0 && nextIdx < STAGES.length) await updateDoc(doc(db, "jobs", id), { status: STAGES[nextIdx] });
+    };
+
+    window.togglePrio = async (e, id, current) => {
+        e.stopPropagation();
+        await updateDoc(doc(db, "jobs", id), { isPriority: !current });
     };
 
     function startListening() {
         onSnapshot(query(collection(db, "jobs"), orderBy("createdAt", "desc")), (snap) => {
             allJobs = [];
             snap.forEach(d => allJobs.push({ id: d.id, ...d.data() }));
-            renderBoards();
+            renderBoard();
         });
     }
 
-    function renderBoards(filter = "") {
-        const active = document.getElementById('activeBoard');
-        const archive = document.getElementById('archiveBoard');
-        active.innerHTML = ""; archive.innerHTML = "";
-
-        allJobs.forEach(job => {
-            const status = (job.status || "NEW").toUpperCase();
-            const searchable = `${job.customerName} ${job.vehicleNumber}`.toLowerCase();
+    window.renderBoard = () => {
+        const filter = document.getElementById('searchInput').value.toLowerCase();
+        STAGES.forEach(stage => {
+            const lane = document.getElementById(`lane-${stage}`);
+            lane.innerHTML = "";
+            const filtered = allJobs.filter(j => (j.status || "NEW").toUpperCase() === stage && (j.vehicleNumber || "").toLowerCase().includes(filter));
             
-            if (filter && !searchable.includes(filter)) return;
-            if (!STAGES.includes(status)) return;
-
-            const card = document.createElement('div');
-            card.className = 'job-card';
-            card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <span class="badge status-${status.toLowerCase()}">${status}</span>
-                    <b style="color:var(--accent); font-size:12px;">${job.vehicleNumber || '---'}</b>
-                </div>
-                <h3 style="margin:0; font-size:18px;">${job.customerName || 'N/A'}</h3>
-                <p style="font-size:12px; opacity:0.6; margin:8px 0;">Task: ${job.serviceType || 'General'}</p>
-                
-                <div class="btn-group">
-                    <button class="nav-btn" onclick="moveStatus('${job.id}', '${status}', -1)" ${status === 'NEW' ? 'disabled' : ''}>← Back</button>
-                    <button class="nav-btn" onclick="moveStatus('${job.id}', '${status}', 1)" ${status === 'COLLECTED' ? 'disabled' : ''}>Next →</button>
-                </div>
-            `;
-
-            if (status === "COLLECTED") archive.appendChild(card);
-            else active.appendChild(card);
+            filtered.sort((a,b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0)).forEach(job => {
+                const card = document.createElement('div');
+                card.className = `job-card ${job.isPriority ? 'high-priority' : ''}`;
+                card.onclick = () => openNotes(job.id, job.vehicleNumber, job.customerName, job.notes);
+                card.innerHTML = `
+                    <div style="font-weight:800; color:var(--accent);">${job.vehicleNumber}</div>
+                    <div style="font-size:14px; margin:4px 0;">${job.customerName}</div>
+                    ${job.notes ? `<div class="note-preview">📝 ${job.notes}</div>` : ''}
+                    <div class="btn-group">
+                        <button class="move-btn" onclick="moveStatus(event, '${job.id}', '${stage}', -1)" ${stage === 'NEW' ? 'disabled' : ''}>←</button>
+                        <button class="move-btn" style="${job.isPriority ? 'color:var(--priority); border-color:var(--priority);' : ''}" onclick="togglePrio(event, '${job.id}', ${job.isPriority || false})">★</button>
+                        <button class="move-btn" onclick="moveStatus(event, '${job.id}', '${stage}', 1)" ${stage === 'COLLECTED' ? 'disabled' : ''}>→</button>
+                    </div>
+                `;
+                lane.appendChild(card);
+            });
         });
     }
 </script>
