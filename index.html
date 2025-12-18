@@ -12,17 +12,15 @@
             --border: rgba(255, 255, 255, 0.12);
             --bg: #020617;
             --priority: #39ff14; /* Neon Green */
-            --critical: #ff3131; /* Red for 6hr alert */
+            --critical: #ff3131; /* Red Delay */
         }
 
         body, html { margin: 0; padding: 0; background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; height: 100%; }
         
-        /* --- LOGIN GATE --- */
         #loginGate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 10000; }
         .auth-card { background: var(--glass); padding: 40px; border-radius: 28px; border: 1px solid var(--border); width: 320px; text-align: center; }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: white; outline: none; box-sizing: border-box; }
 
-        /* --- DASHBOARD --- */
         #workshopApp { display: none; height: 100%; flex-direction: column; }
         .header { padding: 15px 30px; border-bottom: 1px solid var(--border); background: rgba(2, 6, 23, 0.9); display: flex; justify-content: space-between; align-items: center; }
 
@@ -31,22 +29,18 @@
         .lane-head { padding: 15px; border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--accent); }
         .lane-body { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
 
-        /* --- VEHICLE CARDS --- */
         .vehicle-card { background: var(--glass); border: 1px solid var(--border); border-radius: 18px; padding: 18px; position: relative; transition: 0.3s; }
         .vehicle-card.high-prio { border: 2.2px solid var(--priority); box-shadow: 0 0 15px rgba(57, 255, 20, 0.15); }
         .vehicle-card.delayed { border: 2.2px solid var(--critical); }
 
-        .time-badge { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); color: #94a3b8; }
-        .delayed .time-badge { color: var(--critical); background: rgba(255, 49, 49, 0.1); }
+        .time-tag { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); color: #94a3b8; }
+        .delayed .time-tag { color: var(--critical); background: rgba(255, 49, 49, 0.1); }
 
         .card-footer { display: flex; gap: 6px; margin-top: 15px; }
-        .nav-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 8px; cursor: pointer; flex: 1; font-size: 12px; }
-        .nav-btn:hover:not(:disabled) { background: white; color: black; }
+        .ctrl-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 8px; cursor: pointer; flex: 1; font-size: 12px; }
+        .ctrl-btn:hover:not(:disabled) { background: white; color: black; }
         .prio-btn { width: 40px; flex: none; color: #444; border: 1px solid var(--border); background: rgba(255,255,255,0.05); cursor: pointer; padding: 8px; border-radius: 8px; }
         .prio-btn.active { color: var(--priority); border-color: var(--priority); }
-
-        /* --- ADMIN PROMPT --- */
-        #adminGate { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 11000; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -59,25 +53,13 @@
         </div>
     </div>
 
-    <div id="adminGate">
-        <div class="auth-card" style="border-color: #f59e0b;">
-            <h2 style="margin:0; color:var(--accent);">Admin Insights</h2>
-            <input type="password" id="adminPass" placeholder="Admin Key">
-            <button onclick="goToInsights()" style="width:100%; padding:15px; background:#f59e0b; border:none; border-radius:12px; font-weight:800; cursor:pointer;">Authorize & View</button>
-            <button onclick="document.getElementById('adminGate').style.display='none'" style="background:none; border:none; color:white; margin-top:15px; cursor:pointer;">Cancel</button>
-        </div>
-    </div>
-
     <div id="workshopApp">
         <div class="header">
             <div>
                 <h1 style="margin:0; font-size:18px;">Workshop Operations</h1>
                 <span style="font-size:9px; color:var(--priority);">● TERMINAL ACTIVE</span>
             </div>
-            <div style="display:flex; gap:12px; align-items:center;">
-                <input type="text" id="search" style="width:180px; margin:0; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:10px; border-radius:8px;" placeholder="Search Reg..." onkeyup="draw()">
-                <button onclick="document.getElementById('adminGate').style.display='flex'" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px 15px; border-radius:10px; font-weight:800; font-size:11px; cursor:pointer;">Insights Hub</button>
-            </div>
+            <input type="text" id="search" style="width:200px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; padding:10px; border-radius:8px;" placeholder="Search Reg..." onkeyup="draw()">
         </div>
 
         <div class="workshop-floor">
@@ -105,17 +87,8 @@
         if (hex === (localStorage.getItem('staffHash') || "a60965e69e46950275817d7b278156172551a1334f1989025176b1b70951a592")) {
             document.getElementById('loginGate').style.display = 'none';
             document.getElementById('workshopApp').style.display = 'flex';
-            startLiveBoard();
-        } else { alert("Invalid Staff Key"); }
-    };
-
-    window.goToInsights = async () => {
-        const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(document.getElementById('adminPass').value));
-        const hex = Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
-        // Admin Key Verification
-        if (hex === "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4") {
-            window.location.href = "insights.html"; 
-        } else { alert("Incorrect Admin Key"); }
+            startBoard();
+        } else { alert("Invalid Key"); }
     };
 
     window.moveStatus = async (e, id, current, dir) => {
@@ -132,7 +105,7 @@
     };
 
     let jobsData = [];
-    function startLiveBoard() {
+    function startBoard() {
         onSnapshot(query(collection(db, "jobs"), orderBy("createdAt", "desc")), (s) => {
             jobsData = s.docs.map(d => ({ id: d.id, ...d.data() }));
             draw();
@@ -147,7 +120,6 @@
             jobsData.filter(j => (j.status || "NEW").toUpperCase() === s && (j.vehicleNumber || "").toLowerCase().includes(q))
                 .sort((a,b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0)).forEach(job => {
                 
-                // RESTORED: Duration & 6hr Alert Logic
                 const mins = job.createdAt ? Math.floor((new Date() - job.createdAt.toDate()) / 60000) : 0;
                 const timeStr = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins}m`;
 
@@ -156,15 +128,15 @@
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:start;">
                         <span style="color:var(--accent); font-weight:800; font-size:12px;">REG: ${job.vehicleNumber}</span>
-                        <span class="time-badge">${timeStr}</span>
+                        <span class="time-tag">${timeStr}</span>
                     </div>
-                    <h3 style="margin:8px 0 2px 0; font-size:17px; font-weight:700;">${job.customerName}</h3>
-                    <div style="font-size:11px; opacity:0.6;">Task: ${job.serviceType}</div>
+                    <h3 style="margin:8px 0 2px 0; font-size:17px;">${job.customerName}</h3>
+                    <div style="font-size:11px; opacity:0.6;">${job.serviceType}</div>
                     
                     <div class="card-footer">
-                        <button class="nav-btn" onclick="moveStatus(event, '${job.id}', '${s}', -1)" ${s==='NEW'?'disabled':''}>←</button>
-                        <button class="prio-btn ${job.isPriority ? 'active' : ''}" onclick="togglePrio(event, '${job.id}', ${job.isPriority || false})">★</button>
-                        <button class="nav-btn" onclick="moveStatus(event, '${job.id}', '${s}', 1)" ${s==='COLLECTED'?'disabled':''}>→</button>
+                        <button class="ctrl-btn" onclick="moveStatus(event, '${job.id}', '${s}', -1)" ${s==='NEW'?'disabled':''}>←</button>
+                        <button class="ctrl-btn prio-btn ${job.isPriority ? 'active' : ''}" onclick="togglePrio(event, '${job.id}', ${job.isPriority || false})">★</button>
+                        <button class="ctrl-btn" onclick="moveStatus(event, '${job.id}', '${s}', 1)" ${s==='COLLECTED'?'disabled':''}>→</button>
                     </div>
                 `;
                 lane.appendChild(card);
