@@ -2,147 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AutoCare Plus | Insights HUD</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoCare Plus | Live Staff Board</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         :root {
             --accent: #00d2ff;
-            --glass: rgba(10, 15, 28, 0.75);
-            --border: rgba(255, 255, 255, 0.12);
+            --glass: rgba(10, 15, 28, 0.85);
+            --border: rgba(255, 255, 255, 0.1);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body, html {
-            height: 100%; width: 100%;
+        body {
+            margin: 0; background: #020617; color: white;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #020617;
-            color: white; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            background-image: radial-gradient(circle at top right, #0a192f, #020617);
         }
 
-        /* 1. DYNAMIC HERO BACKGROUND */
-        .stage {
-            position: relative;
-            height: 100vh; width: 100vw;
-            display: flex; align-items: center; justify-content: center;
-            background: 
-                linear-gradient(rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 0.9)),
-                url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat;
+        .header {
+            width: 100%; padding: 30px; text-align: center;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
         }
 
-        /* 2. CIRCUIT DATA OVERLAY */
-        .circuits {
-            position: absolute; inset: 0;
-            background-image: 
-                linear-gradient(var(--border) 1px, transparent 1px),
-                linear-gradient(90deg, var(--border) 1px, transparent 1px);
-            background-size: 100px 100px;
-            mask-image: radial-gradient(circle, black, transparent 85%);
-            opacity: 0.3; pointer-events: none;
-            animation: pulseGrid 8s infinite alternate;
+        .board-container {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px; width: 90%; max-width: 1200px; padding: 40px 0;
         }
 
-        @keyframes pulseGrid { from { opacity: 0.2; } to { opacity: 0.4; } }
-
-        /* 3. MAIN GLASS PANEL (MATCHES GENERATED IMAGE) */
-        .hud-panel {
-            position: relative;
-            width: 90%; max-width: 1100px;
+        /* Glassmorphism Card */
+        .job-card {
             background: var(--glass);
-            backdrop-filter: blur(35px);
-            -webkit-backdrop-filter: blur(35px);
             border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 60px 80px;
-            display: grid;
-            grid-template-columns: 1.3fr 1fr;
-            gap: 60px;
-            box-shadow: 0 40px 120px rgba(0,0,0,0.8);
-            border-top: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px; padding: 20px;
+            position: relative; overflow: hidden;
+            animation: slideIn 0.4s ease-out;
         }
 
-        .branding h1 {
-            font-size: 72px; font-weight: 700;
-            letter-spacing: -4px; line-height: 0.9;
-            margin-bottom: 15px;
-            background: linear-gradient(to bottom, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .status-badge {
+            font-size: 10px; font-weight: 800; padding: 4px 10px;
+            border-radius: 20px; text-transform: uppercase; letter-spacing: 1px;
+            background: rgba(0, 210, 255, 0.2); color: var(--accent);
         }
 
-        .branding p {
-            font-size: 14px; color: var(--accent);
-            text-transform: uppercase; letter-spacing: 5px;
-            font-weight: 700; opacity: 0.9;
-        }
+        .job-id { font-size: 12px; opacity: 0.5; margin-bottom: 10px; display: block; }
+        .customer-name { font-size: 22px; font-weight: 700; margin: 10px 0; display: block; }
+        .service-type { font-size: 14px; color: #94a3b8; }
 
-        /* 4. DATA VISUALIZATION AREA */
-        .data-viz {
-            border-left: 1px solid var(--border);
-            padding-left: 60px;
-            display: flex; flex-direction: column; justify-content: center;
+        .live-indicator {
+            position: fixed; top: 20px; right: 20px;
+            background: rgba(16, 185, 129, 0.1); color: #10b981;
+            padding: 8px 15px; border-radius: 50px; font-size: 11px;
+            font-weight: 700; border: 1px solid #10b981;
         }
-
-        .chart-wrap { height: 140px; width: 100%; margin-bottom: 30px; }
-        
-        .stats-row {
-            display: flex; justify-content: space-between;
-            margin-top: 10px; border-top: 1px solid var(--border);
-            padding-top: 25px;
-        }
-
-        .stat-box { text-align: left; }
-        .stat-label { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
-        .stat-num { font-size: 32px; font-weight: 700; display: block; margin-top: 5px; }
-
-        .live-status {
-            position: absolute; top: 30px; right: 40px;
-            font-size: 10px; color: #10b981; font-weight: 800;
-            letter-spacing: 2px; display: flex; align-items: center; gap: 8px;
-        }
-        .dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: blink 1s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
 
-<div class="stage">
-    <div class="circuits"></div>
-    
-    <div class="hud-panel">
-        <div class="live-status"><div class="dot"></div> SYSTEM ONLINE</div>
-        
-        <div class="branding">
-            <h1>AutoCare Plus</h1>
-            <p>Predictive Service Terminal</p>
-        </div>
+    <div class="live-indicator">● LIVE SYNC ACTIVE</div>
 
-        <div class="data-viz">
-            <div class="chart-wrap">
-                <canvas id="liveChart"></canvas>
-            </div>
-            
-            <div class="stats-row">
-                <div class="stat-box">
-                    <span class="stat-label">System Load</span>
-                    <span class="stat-num" id="totalJobs">0</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">Net Efficiency</span>
-                    <span class="stat-num" id="avgTime">0m</span>
-                </div>
-            </div>
-        </div>
+    <div class="header">
+        <h1 style="letter-spacing: -1px;">Staff Operations Board</h1>
+        <p style="color: var(--accent); font-size: 12px; letter-spacing: 3px; text-transform: uppercase;">Real-Time Service Feed</p>
     </div>
-</div>
+
+    <div class="board-container" id="staffBoard">
+        </div>
 
 <script type="module">
-    // FIREBASE INTEGRATION
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyD9cPmUCMEtT7XukcAxmeS50jKh1A2f31Q",
@@ -155,55 +85,34 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const board = document.getElementById('staffBoard');
 
-    // CHART.JS INITIALIZATION (HUD STYLE)
-    const ctx = document.getElementById('liveChart').getContext('2d');
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['', '', '', '', '', '', '', ''],
-            datasets: [{
-                data: [0, 0, 0, 0, 0, 0, 0, 0],
-                borderColor: '#00d2ff',
-                borderWidth: 4,
-                tension: 0.4,
-                fill: true,
-                backgroundColor: 'rgba(0, 210, 255, 0.08)',
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { x: { display: false }, y: { display: false } }
-        }
-    });
+    // THIS IS THE KEY: onSnapshot listens for ANY database change
+    const q = query(collection(db, "jobs"), orderBy("createdAt", "desc"));
 
-    // REAL-TIME LISTENER
-    onSnapshot(collection(db, "jobs"), (snap) => {
-        let done = 0;
-        let totalTime = 0;
-        let chartData = [];
+    onSnapshot(q, (snapshot) => {
+        // Clear board for fresh render on every change
+        board.innerHTML = ""; 
 
-        snap.forEach(doc => {
-            const data = doc.data();
-            if(data.status === "COMPLETED" && data.completedAt && data.createdAt) {
-                done++;
-                totalTime += (data.completedAt.seconds - data.createdAt.seconds);
-            }
+        snapshot.forEach((doc) => {
+            const job = doc.data();
+            const card = document.createElement('div');
+            card.className = 'job-card';
+            
+            card.innerHTML = `
+                <span class="job-id">Ticket #${doc.id.slice(0,6)}</span>
+                <span class="status-badge">${job.status || 'PENDING'}</span>
+                <span class="customer-name">${job.customerName || 'Unknown Customer'}</span>
+                <div class="service-type">Service: <b>${job.serviceType || 'Standard'}</b></div>
+                <div style="margin-top: 15px; font-size: 11px; opacity: 0.6;">
+                    Received: ${job.createdAt ? new Date(job.createdAt.seconds * 1000).toLocaleTimeString() : 'Just now'}
+                </div>
+            `;
+            board.appendChild(card);
         });
-
-        // Update Counters
-        document.getElementById("totalJobs").innerText = snap.size;
-        document.getElementById("avgTime").innerText = (done ? Math.round(totalTime/done/60) : 0) + "m";
-
-        // Update Chart with dynamic "heartbeat"
-        const currentData = chart.data.datasets[0].data;
-        currentData.push(snap.size); 
-        if(currentData.length > 8) currentData.shift();
-        chart.update();
+    }, (error) => {
+        console.error("Sync Error:", error);
     });
 </script>
-
 </body>
 </html>
