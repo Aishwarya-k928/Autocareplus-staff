@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AutoCare Plus | Staff Control</title>
+    <title>AutoCare Plus | Staff Command</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
@@ -15,162 +15,171 @@
             --servicing: #f59e0b;
             --ready: #10b981;
             --collected: #64748b;
-            --critical: #ff4b2b;
         }
 
-        body {
-            margin: 0; background: var(--bg); color: white;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-image: radial-gradient(circle at top right, #0a192f, #020617);
-        }
-
-        /* --- AUTH --- */
-        #loginOverlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 9999; }
-        .card-auth { background: var(--glass); padding: 40px; border-radius: 28px; border: 1px solid var(--border); width: 90%; max-width: 400px; text-align: center; }
-        input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; padding: 15px; color: white; margin-bottom: 15px; outline: none; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        /* --- BOARD --- */
-        #mainContent { display: none; padding: 30px; opacity: 0; transition: 0.5s; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        /* --- HEADER & NAVIGATION --- */
+        .top-bar { 
+            padding: 20px 40px; border-bottom: 1px solid var(--border); 
+            background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .search-box {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            padding: 10px 20px; border-radius: 12px; color: white; width: 300px; outline: none;
+        }
+
+        .tab-bar { display: flex; gap: 15px; margin-top: 15px; padding: 0 40px; }
+        .tab { padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 800; font-size: 11px; color: #94a3b8; border: 1px solid transparent; }
+        .tab.active { background: var(--accent); color: #020617; }
+
+        /* --- CONTENT --- */
+        .content-section { display: none; padding: 30px 40px; }
+        .content-section.active { display: block; }
         .board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
 
-        .job-card { background: var(--glass); border: 1px solid var(--border); border-radius: 24px; padding: 25px; position: relative; }
-        .status-badge { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 50px; text-transform: uppercase; }
-        
-        /* Colors */
-        .status-new { color: var(--new); border: 1px solid var(--new); }
-        .status-servicing { color: var(--servicing); border: 1px solid var(--servicing); }
-        .status-ready { color: var(--ready); border: 1px solid var(--ready); }
-        .status-collected { color: var(--collected); border: 1px solid var(--collected); }
-
-        /* Timer Alert */
-        .timer-hud { font-size: 11px; font-weight: 700; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 8px; }
-        .timer-hud.alert { color: var(--critical); background: rgba(255, 75, 43, 0.1); border: 1px solid var(--critical); }
-
-        /* PROGRESS BUTTON */
-        .progress-btn {
-            width: 100%; margin-top: 20px; padding: 15px; border-radius: 12px; border: none;
-            font-weight: 800; cursor: pointer; text-transform: uppercase;
-            background: var(--accent); color: #020617; transition: 0.3s;
+        /* --- JOB CARDS --- */
+        .job-card { 
+            background: var(--glass); border: 1px solid var(--border); border-radius: 20px; 
+            padding: 20px; transition: 0.3s;
         }
-        .progress-btn:hover { background: white; transform: scale(1.02); }
-        .progress-btn:disabled { opacity: 0.3; cursor: not-allowed; background: #222; color: #555; }
+        .badge { font-size: 9px; font-weight: 800; padding: 4px 10px; border-radius: 50px; text-transform: uppercase; border: 1px solid; }
+        .status-new { color: var(--new); }
+        .status-servicing { color: var(--servicing); }
+        .status-ready { color: var(--ready); }
+        .status-collected { color: var(--collected); }
+
+        /* --- CONTROLS --- */
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .nav-btn { 
+            padding: 12px; border-radius: 10px; border: 1px solid var(--border); 
+            background: rgba(255,255,255,0.03); color: white; font-weight: 800; font-size: 10px; cursor: pointer; 
+        }
+        .nav-btn:hover:not(:disabled) { background: white; color: black; }
+        .nav-btn:disabled { opacity: 0.1; cursor: not-allowed; }
+
+        #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
-        <div class="card-auth">
-            <h2>Staff Access</h2>
-            <input type="email" id="email" placeholder="autocareplus@org.com">
-            <input type="password" id="password" placeholder="Enter Security Key">
-            <button class="progress-btn" onclick="attemptLogin()">Unlock Board</button>
+        <div style="text-align:center; background:var(--glass); padding:40px; border-radius:28px; border: 1px solid var(--border); width: 350px;">
+            <h2>Staff Portal</h2>
+            <input type="password" id="password" placeholder="Terminal Key" style="width:100%; padding:15px; margin-bottom:15px; border-radius:10px; border:none; background:rgba(255,255,255,0.1); color:white;">
+            <button onclick="attemptLogin()" style="width:100%; padding:15px; background:var(--accent); border:none; border-radius:10px; font-weight:800; cursor:pointer;">Enter Workshop</button>
         </div>
     </div>
 
-    <div id="mainContent">
-        <div class="header">
+    <div id="mainUI" style="display:none;">
+        <div class="top-bar">
             <div>
-                <h1 style="margin:0;">Workshop Control</h1>
-                <span id="syncIndicator" style="color:var(--ready); font-size:10px;">● CONNECTED TO CLOUD</span>
+                <h1 style="margin:0; font-size:18px;">Workshop Terminal</h1>
+                <span style="font-size:9px; color:var(--ready);">● LIVE SYNC ACTIVE</span>
             </div>
+            <input type="text" id="searchInput" class="search-box" placeholder="Search Reg or Name..." onkeyup="filterJobs()">
         </div>
-        <div class="board-grid" id="staffBoard"></div>
+
+        <div class="tab-bar">
+            <div class="tab active" onclick="switchTab('active', event)">ACTIVE WORKFLOW</div>
+            <div class="tab" onclick="switchTab('archive', event)">HISTORY (COLLECTED)</div>
+        </div>
+
+        <div id="activeSection" class="content-section active">
+            <div class="board-grid" id="activeBoard"></div>
+        </div>
+
+        <div id="archiveSection" class="content-section">
+            <div class="board-grid" id="archiveBoard"></div>
+        </div>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
     import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-    const firebaseConfig = {
+    const db = getFirestore(initializeApp({
         apiKey: "AIzaSyD9cPmUCMEtT7XukcAxmeS50jKh1A2f31Q",
         projectId: "auto-care-plus-e7fdf"
+    }));
+
+    const STAGES = ["NEW", "SERVICING", "READY", "COLLECTED"];
+    let allJobs = [];
+
+    window.switchTab = (type, e) => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        e.target.classList.add('active');
+        document.getElementById(type + 'Section').classList.add('active');
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // WORKFLOW DEFINITION
-    const WORKFLOW = {
-        "NEW": { next: "SERVICING", label: "Start Servicing" },
-        "SERVICING": { next: "READY", label: "Mark as Ready" },
-        "READY": { next: "COLLECTED", label: "Mark Collected" },
-        "COLLECTED": { next: null, label: "Job Complete" }
-    };
-
-    // UPDATE FUNCTION - Attached to window so buttons can call it
-    window.updateJobStatus = async (jobId, currentStatus) => {
-        const nextStatus = WORKFLOW[currentStatus]?.next;
-        if (!nextStatus) return;
-
-        try {
-            const jobRef = doc(db, "jobs", jobId);
-            await updateDoc(jobRef, { status: nextStatus });
-            console.log(`Job ${jobId} moved to ${nextStatus}`);
-        } catch (error) {
-            console.error("Error updating status: ", error);
-            alert("Update Failed. Check connection.");
+    window.moveStatus = async (jobId, current, direction) => {
+        const idx = STAGES.indexOf(current);
+        const nextIdx = idx + direction;
+        if (nextIdx >= 0 && nextIdx < STAGES.length) {
+            await updateDoc(doc(db, "jobs", jobId), { status: STAGES[nextIdx] });
         }
     };
 
-    // LOGIN LOGIC
+    window.filterJobs = () => {
+        const queryText = document.getElementById('searchInput').value.toLowerCase();
+        renderBoards(queryText);
+    };
+
     window.attemptLogin = async () => {
         const pass = document.getElementById('password').value;
         const target = localStorage.getItem('staffHash') || "a60965e69e46950275817d7b278156172551a1334f1989025176b1b70951a592";
-        
-        const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass));
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass));
+        const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-        if (hashHex === target) {
+        if (hex === target) {
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            setTimeout(() => document.getElementById('mainContent').style.opacity = '1', 50);
-            startLiveBoard();
-        } else {
-            alert("Invalid Key");
+            document.getElementById('mainUI').style.display = 'block';
+            startListening();
         }
     };
 
-    function startLiveBoard() {
-        const q = query(collection(db, "jobs"), orderBy("createdAt", "desc"));
-        
-        onSnapshot(q, (snapshot) => {
-            const board = document.getElementById('staffBoard');
-            board.innerHTML = "";
+    function startListening() {
+        onSnapshot(query(collection(db, "jobs"), orderBy("createdAt", "desc")), (snap) => {
+            allJobs = [];
+            snap.forEach(d => allJobs.push({ id: d.id, ...d.data() }));
+            renderBoards();
+        });
+    }
 
-            snapshot.forEach((docSnap) => {
-                const job = docSnap.data();
-                const status = (job.status || "NEW").toUpperCase();
-                const id = docSnap.id;
+    function renderBoards(filter = "") {
+        const active = document.getElementById('activeBoard');
+        const archive = document.getElementById('archiveBoard');
+        active.innerHTML = ""; archive.innerHTML = "";
 
-                // Only show jobs in our workflow
-                if (!WORKFLOW[status]) return;
+        allJobs.forEach(job => {
+            const status = (job.status || "NEW").toUpperCase();
+            const searchable = `${job.customerName} ${job.vehicleNumber}`.toLowerCase();
+            
+            if (filter && !searchable.includes(filter)) return;
+            if (!STAGES.includes(status)) return;
 
-                const diffMins = job.createdAt ? Math.floor((new Date() - job.createdAt.toDate()) / 60000) : 0;
-                const isAlert = diffMins >= 360; // 6 Hours
+            const card = document.createElement('div');
+            card.className = 'job-card';
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <span class="badge status-${status.toLowerCase()}">${status}</span>
+                    <b style="color:var(--accent); font-size:12px;">${job.vehicleNumber || '---'}</b>
+                </div>
+                <h3 style="margin:0; font-size:18px;">${job.customerName || 'N/A'}</h3>
+                <p style="font-size:12px; opacity:0.6; margin:8px 0;">Task: ${job.serviceType || 'General'}</p>
+                
+                <div class="btn-group">
+                    <button class="nav-btn" onclick="moveStatus('${job.id}', '${status}', -1)" ${status === 'NEW' ? 'disabled' : ''}>← Back</button>
+                    <button class="nav-btn" onclick="moveStatus('${job.id}', '${status}', 1)" ${status === 'COLLECTED' ? 'disabled' : ''}>Next →</button>
+                </div>
+            `;
 
-                const card = document.createElement('div');
-                card.className = 'job-card';
-                card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                        <span class="status-badge status-${status.toLowerCase()}">${status}</span>
-                        <div class="timer-hud ${isAlert ? 'alert' : ''}">
-                            ${diffMins < 60 ? diffMins + 'm' : Math.floor(diffMins/60) + 'h ' + (diffMins%60) + 'm'}
-                        </div>
-                    </div>
-                    <h2 style="margin:0; font-size:20px;">${job.customerName || 'No Name'}</h2>
-                    <div style="color:var(--accent); font-weight:800; margin:10px 0; font-size:12px;">REG: ${job.vehicleNumber || '---'}</div>
-                    <div style="font-size:13px; opacity:0.8;">Task: ${job.serviceType || 'General Service'}</div>
-                    
-                    <button class="progress-btn" 
-                        ${!WORKFLOW[status].next ? 'disabled' : ''} 
-                        onclick="updateJobStatus('${id}', '${status}')">
-                        ${WORKFLOW[status].label}
-                    </button>
-                `;
-                board.appendChild(card);
-            });
+            if (status === "COLLECTED") archive.appendChild(card);
+            else active.appendChild(card);
         });
     }
 </script>
